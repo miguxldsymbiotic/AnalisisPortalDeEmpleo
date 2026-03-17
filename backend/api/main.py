@@ -18,9 +18,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Vacantes Colombia API — BID Analytics", lifespan=lifespan)
 
-origins = [
-    os.getenv("CORS_ORIGINS", "http://localhost:5173"),
-]
+raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+# Permite múltiples orígenes separados por coma (útil en despliegues).
+origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
