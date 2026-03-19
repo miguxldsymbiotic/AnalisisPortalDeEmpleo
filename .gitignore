@@ -18,3 +18,5 @@ dist/
 *.pdf
 *.csv
 *.xlsx
+*.sql
+*.tar
