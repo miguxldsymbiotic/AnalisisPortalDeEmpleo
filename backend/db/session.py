@@ -6,19 +6,28 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'))
 
 print("--- BACKEND DB CONFIG DEBUG ---")
-db_url_raw = os.getenv("DATABASE_URL")
-if db_url_raw:
-    # Mostramos solo el host y el puerto por seguridad
-    masked_url = db_url_raw.split("@")[-1] if "@" in db_url_raw else "INVALID_FORMAT"
-    print(f"DATABASE_URL detectada. Host: {masked_url}")
+
+# Intentar primero con variables separadas
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_NAME = os.getenv("DB_NAME")
+
+if DB_USER and DB_PASSWORD and DB_HOST and DB_NAME:
+    DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    print(f"DEBUG: Usando variables separadas. Host: {DB_HOST}, DB: {DB_NAME}")
 else:
-    print("CRITICAL: DATABASE_URL NO ESTÁ CONFIGURADA EN RENDER")
+    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://vacantes_user:cambiame@localhost:5432/vacantes_colombia")
+    if "@" in DATABASE_URL:
+        masked_url = DATABASE_URL.split("@")[-1]
+        print(f"DEBUG: Usando DATABASE_URL. Host: {masked_url}")
+    else:
+        print("CRITICAL: DATABASE_URL NO ESTÁ CONFIGURADA O TIENE FORMATO INVÁLIDO")
 
 db_ssl_val = os.getenv("DB_SSL")
 print(f"DB_SSL valor: {db_ssl_val}")
 print("-------------------------------")
-
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://vacantes_user:cambiame@localhost:5432/vacantes_colombia")
 
 db_ssl = os.getenv("DB_SSL", "").strip().lower() in {"1", "true", "yes", "on", "require", "required"}
 
