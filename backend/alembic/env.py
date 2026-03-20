@@ -34,6 +34,15 @@ if db_url:
         db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
     elif db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    
+    # Eliminar sslmode si está presente en la URL para evitar conflictos con asyncpg
+    if "?" in db_url:
+        base_url, query = db_url.split("?", 1)
+        params = [p for p in query.split("&") if not p.startswith("sslmode=")]
+        if params:
+            db_url = f"{base_url}?{'&'.join(params)}"
+        else:
+            db_url = base_url
 config.set_main_option("sqlalchemy.url", db_url)
 
 # other values from the config, defined by the needs of env.py,
@@ -78,11 +87,21 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
+    # Obtener configuración SSL si está habilitada
+    db_ssl = os.getenv("DB_SSL", "").strip().lower() in {"1", "true", "yes", "on", "require", "required"}
+    connect_args = {}
+    if db_ssl:
+        import ssl
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        connect_args = {"ssl": ctx}
 
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args
     )
 
     async with connectable.connect() as connection:

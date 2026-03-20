@@ -28,6 +28,16 @@ else:
     elif DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
     
+    # Eliminar sslmode si está presente en la URL para evitar conflictos con asyncpg
+    # y otros parámetros de consulta que asyncpg no soporta directamente o que causan conflictos
+    if "?" in DATABASE_URL:
+        base_url, query = DATABASE_URL.split("?", 1)
+        params = [p for p in query.split("&") if not p.startswith("sslmode=")]
+        if params:
+            DATABASE_URL = f"{base_url}?{'&'.join(params)}"
+        else:
+            DATABASE_URL = base_url
+    
     if "@" in DATABASE_URL:
         masked_url = DATABASE_URL.split("@")[-1]
         print(f"DEBUG: Usando DATABASE_URL. Host: {masked_url}")
