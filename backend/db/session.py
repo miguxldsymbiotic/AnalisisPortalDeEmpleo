@@ -21,6 +21,13 @@ if DB_USER and DB_PASSWORD and DB_HOST and DB_NAME:
     print(f"DEBUG: Variables separadas detectadas. Host: {DB_HOST}, DB: {DB_NAME}")
 else:
     DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://vacantes_user:cambiame@localhost:5432/vacantes_colombia").strip()
+    
+    # Normalización del prefijo para SQLAlchemy Async
+    if DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+    
     if "@" in DATABASE_URL:
         masked_url = DATABASE_URL.split("@")[-1]
         print(f"DEBUG: Usando DATABASE_URL. Host: {masked_url}")

@@ -9,7 +9,7 @@ load_dotenv()
 
 async def test_db_connection():
     # Get the connection string from environment
-    # In Aiven/Neon, it must start with postgresql+asyncpg://
+    # In Aiven or other PostgreSQL providers, it must start with postgresql+asyncpg://
     db_url = os.getenv("DATABASE_URL")
     db_ssl = os.getenv("DB_SSL", "true").lower() in ("true", "1", "yes", "require")
     
@@ -41,7 +41,7 @@ async def test_db_connection():
         print(f"❌ Connection failed: {e}")
         print("\n💡 Troubleshooting Tips:")
         print("1. Ensure the URI starts with 'postgresql+asyncpg://' (NOT 'postgres://').")
-        print("2. If using Aiven/Neon, ensure '?sslmode=require' is at the end of the URI.")
+        print("2. If using Aiven or similar, ensure '?sslmode=require' is at the end of the URI or DB_SSL=true.")
         print("3. Ensure DB_SSL is set to 'true' in your environment.")
 
 if __name__ == "__main__":
