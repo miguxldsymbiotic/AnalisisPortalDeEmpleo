@@ -1,6 +1,8 @@
 import os
 import ssl
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+import traceback
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy import text
 from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'))
@@ -47,4 +49,14 @@ AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 async def get_db():
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            # Prueba de conexión rápida al solicitar la sesión
+            await session.execute(text("SELECT 1"))
+            yield session
+        except Exception as e:
+            print("--- CRITICAL DB CONNECTION ERROR ---")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Error message: {str(e)}")
+            traceback.print_exc()
+            print("-------------------------------------")
+            raise e
