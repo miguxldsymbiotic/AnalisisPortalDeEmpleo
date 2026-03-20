@@ -50,8 +50,18 @@ AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 async def get_db():
     async with AsyncSessionLocal() as session:
         try:
-            # Prueba de conexión rápida al solicitar la sesión
-            await session.execute(text("SELECT 1"))
+            # Información extra de diagnóstico
+            res = await session.execute(text("SELECT current_database(), current_user, current_schema()"))
+            db_now, user_now, schema_now = res.one()
+            print(f"DEBUG: Conexión activa a DB: {db_now}, Usuario: {user_now}, Esquema: {schema_now}")
+            
+            # Aseguramos el search_path por si acaso
+            await session.execute(text("SET search_path TO public"))
+            
+            # Prueba de existencia de tabla crítica
+            await session.execute(text("SELECT 1 FROM vacantes LIMIT 1"))
+            print("DEBUG: Tabla 'vacantes' encontrada y accesible.")
+            
             yield session
         except Exception as e:
             print("--- CRITICAL DB CONNECTION ERROR ---")
