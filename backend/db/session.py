@@ -10,17 +10,17 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file_
 print("--- BACKEND DB CONFIG DEBUG ---")
 
 # Intentar primero con variables separadas
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER", "").strip()
+DB_PASSWORD = os.getenv("DB_PASSWORD", "").strip()
+DB_HOST = os.getenv("DB_HOST", "").strip()
+DB_PORT = os.getenv("DB_PORT", "20351").strip()
+DB_NAME = os.getenv("DB_NAME", "").strip()
 
 if DB_USER and DB_PASSWORD and DB_HOST and DB_NAME:
     DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    print(f"DEBUG: Usando variables separadas. Host: {DB_HOST}, DB: {DB_NAME}")
+    print(f"DEBUG: Variables separadas detectadas. Host: {DB_HOST}, DB: {DB_NAME}")
 else:
-    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://vacantes_user:cambiame@localhost:5432/vacantes_colombia")
+    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://vacantes_user:cambiame@localhost:5432/vacantes_colombia").strip()
     if "@" in DATABASE_URL:
         masked_url = DATABASE_URL.split("@")[-1]
         print(f"DEBUG: Usando DATABASE_URL. Host: {masked_url}")
