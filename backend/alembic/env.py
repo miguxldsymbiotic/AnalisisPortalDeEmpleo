@@ -1,122 +1,59 @@
 import asyncio
 from logging.config import fileConfig
-
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
-
+from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
-
 import os
 import sys
 from dotenv import load_dotenv
+import ssl
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env'))
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+load_dotenv(env_path, override=True)
 
 from db.models import Base
-
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
-
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
 target_metadata = Base.metadata
 
-# Injecting database URL from environment variable
 db_url = os.getenv("DATABASE_URL")
-if db_url:
-    if db_url.startswith("postgresql://"):
-        db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    elif db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
-    
-    # Eliminar sslmode si está presente en la URL para evitar conflictos con asyncpg
-    if "?" in db_url:
-        base_url, query = db_url.split("?", 1)
-        params = [p for p in query.split("&") if not p.startswith("sslmode=")]
-        if params:
-            db_url = f"{base_url}?{'&'.join(params)}"
-        else:
-            db_url = base_url
-config.set_main_option("sqlalchemy.url", db_url)
+if "postgres://" in db_url:
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
-
-
-def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
-    url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-    )
-
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
-
-    with context.begin_transaction():
-        context.run_migrations()
-
+aiven_host = "pg-1bd8e7df-uniminuto-4de2.k.aivencloud.com"
+aiven_ip = "146.190.131.22"
+if aiven_host in db_url:
+    db_url = db_url.replace(aiven_host, aiven_ip)
+if "?" in db_url:
+    db_url = db_url.split("?")[0]
 
 async def run_async_migrations() -> None:
-    """In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
-    # Obtener configuración SSL si está habilitada
-    db_ssl = os.getenv("DB_SSL", "").strip().lower() in {"1", "true", "yes", "on", "require", "required"}
-    connect_args = {}
-    if db_ssl:
-        import ssl
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        connect_args = {"ssl": ctx}
-
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-        connect_args=connect_args
-    )
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    
+    connectable = create_async_engine(db_url, poolclass=pool.NullPool, connect_args={
+        "ssl": ctx,
+        "server_hostname": aiven_host
+    })
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
-
     await connectable.dispose()
 
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(connection=connection, target_metadata=target_metadata)
+    with context.begin_transaction():
+        context.run_migrations()
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-
     asyncio.run(run_async_migrations())
 
-
 if context.is_offline_mode():
-    run_migrations_offline()
+    pass
 else:
     run_migrations_online()

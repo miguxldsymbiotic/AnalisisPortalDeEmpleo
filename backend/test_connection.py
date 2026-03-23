@@ -3,46 +3,36 @@ import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 from dotenv import load_dotenv
+import ssl
 
-# Load local .env if it exists
-load_dotenv()
+load_dotenv(override=True)
 
-async def test_db_connection():
-    # Get the connection string from environment
-    # In Aiven or other PostgreSQL providers, it must start with postgresql+asyncpg://
+async def test():
     db_url = os.getenv("DATABASE_URL")
-    db_ssl = os.getenv("DB_SSL", "true").lower() in ("true", "1", "yes", "require")
+    aiven_host = "pg-1bd8e7df-uniminuto-4de2.k.aivencloud.com"
+    aiven_ip = "146.190.131.22"
     
-    if not db_url:
-        print("❌ Error: DATABASE_URL not found in environment variables.")
-        return
+    if aiven_host in db_url:
+        db_url = db_url.replace(aiven_host, aiven_ip)
+    if "?" in db_url:
+        db_url = db_url.split("?")[0]
 
-    print(f"Connecting to: {db_url.split('@')[-1]} (SSL: {db_ssl})")
-
-    connect_args = {"ssl": True} if db_ssl else {}
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
     
+    print(f"Connecting to: {db_url}")
     try:
-        engine = create_async_engine(db_url, connect_args=connect_args)
+        engine = create_async_engine(db_url, connect_args={
+            "ssl": ctx,
+            "server_hostname": aiven_host
+        })
         async with engine.connect() as conn:
-            result = await conn.execute(text("SELECT version();"))
-            version = result.scalar()
-            print(f"✅ Success! Connected to: {version}")
-            
-            # Check if vacantes table exists and count
-            try:
-                result = await conn.execute(text("SELECT count(*) FROM vacantes;"))
-                count = result.scalar()
-                print(f"📊 The 'vacantes' table has {count} records.")
-            except Exception as e:
-                print(f"⚠️ Warning: Could not query 'vacantes' table. Is the schema applied? Error: {e}")
-                
+            res = await conn.execute(text("SELECT version()"))
+            print(f"✅ Success: {res.scalar()}")
         await engine.dispose()
     except Exception as e:
-        print(f"❌ Connection failed: {e}")
-        print("\n💡 Troubleshooting Tips:")
-        print("1. Ensure the URI starts with 'postgresql+asyncpg://' (NOT 'postgres://').")
-        print("2. If using Aiven or similar, ensure '?sslmode=require' is at the end of the URI or DB_SSL=true.")
-        print("3. Ensure DB_SSL is set to 'true' in your environment.")
+        print(f"❌ Failed: {e}")
 
 if __name__ == "__main__":
-    asyncio.run(test_db_connection())
+    asyncio.run(test())
