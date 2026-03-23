@@ -1,0 +1,43 @@
+services:
+  # Backend: FastAPI
+  - type: web
+    name: vacantes-backend
+    env: python
+    region: ohio
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DB_HOST
+        value: pg-303b3cf1-uniminuto-4de2.b.aivencloud.com
+      - key: DB_PORT
+        value: "20351"
+      - key: DB_SSL
+        value: "true"
+      - key: DB_NAME
+        value: vacantes_colombia
+      - key: DB_USER
+        value: avnadmin
+      - key: DB_PASSWORD
+        value: AVNS_zW0mc3E82Mwxa-NUhgM
+      - key: DATABASE_URL
+        value: postgresql+asyncpg://avnadmin:AVNS_zW0mc3E82Mwxa-NUhgM@pg-303b3cf1-uniminuto-4de2.b.aivencloud.com:20351/vacantes_colombia?sslmode=require
+      - key: CORS_ORIGINS
+        value: "*"
+
+  # Frontend: React/Vite Static Site
+  - type: static
+    name: vacantes-frontend
+    env: static
+    region: ohio
+    plan: free
+    rootDir: frontend
+    buildCommand: npm run build
+    publishDir: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: vacantes-backend
+          property: host

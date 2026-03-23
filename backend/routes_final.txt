@@ -1,0 +1,24 @@
+Path: /openapi.json, Methods: {'HEAD', 'GET'}
+Path: /docs, Methods: {'HEAD', 'GET'}
+Path: /docs/oauth2-redirect, Methods: {'HEAD', 'GET'}
+Path: /redoc, Methods: {'HEAD', 'GET'}
+Path: /api/v1/vacantes, Methods: {'GET'}
+Path: /api/v1/vacantes/{codigo}, Methods: {'GET'}
+Path: /api/v1/vacantes/buscar, Methods: {'GET'}
+Path: /api/v1/estadisticas/resumen, Methods: {'GET'}
+Path: /api/v1/estadisticas/por-departamento, Methods: {'GET'}
+Path: /api/v1/estadisticas/por-sector, Methods: {'GET'}
+Path: /api/v1/estadisticas/por-contrato, Methods: {'GET'}
+Path: /api/v1/estadisticas/por-estudios, Methods: {'GET'}
+Path: /api/v1/estadisticas/salarios, Methods: {'GET'}
+Path: /api/v1/estadisticas/territorial, Methods: {'GET'}
+Path: /api/v1/estadisticas/inclusion, Methods: {'GET'}
+Path: /api/v1/estadisticas/brechas, Methods: {'GET'}
+Path: /api/v1/estadisticas/tendencias, Methods: {'GET'}
+Path: /api/v1/scraper/iniciar, Methods: {'POST'}
+Path: /api/v1/scraper/iniciar-completo, Methods: {'POST'}
+Path: /api/v1/scraper/cancelar, Methods: {'POST'}
+Path: /api/v1/scraper/estado, Methods: {'GET'}
+Path: /api/v1/scraper/sesiones, Methods: {'GET'}
+Path: /api/v1/vacantes/exportar, Methods: {'GET'}
+Path: /, Methods: {'GET'}
