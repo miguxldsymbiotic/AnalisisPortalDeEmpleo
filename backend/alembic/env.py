@@ -20,7 +20,11 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-db_url = os.getenv("DATABASE_URL")
+db_url = os.getenv("DATABASE_URL", "")
+if not db_url:
+    # Fallback to config if env var is missing
+    db_url = config.get_main_option("sqlalchemy.url", "")
+
 if "postgres://" in db_url:
     db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
 
