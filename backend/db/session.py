@@ -10,20 +10,19 @@ DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 if "postgres://" in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
 
+if "?" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.split("?")[0]
+
 # Aiven Specifics for Local DNS Bypass
 aiven_host = "pg-1bd8e7df-uniminuto-4de2.k.aivencloud.com"
 aiven_ip = "146.190.131.22"
 
 connect_args = {}
-# Only apply the IP bypass if NOT on Render/Cloud
-# Render already has working DNS resolution
 is_render = os.getenv("RENDER") == "true"
 
 if not is_render and aiven_host in DATABASE_URL:
     # Local Windows often fails to resolve Aiven hostname, so we use IP + SNI
     DATABASE_URL = DATABASE_URL.replace(aiven_host, aiven_ip)
-    if "?" in DATABASE_URL:
-        DATABASE_URL = DATABASE_URL.split("?")[0]
     
     ctx = ssl.create_default_context()
     ctx.check_hostname = False

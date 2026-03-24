@@ -24,6 +24,9 @@ db_url = os.getenv("DATABASE_URL")
 if "postgres://" in db_url:
     db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
 
+if "?" in db_url:
+    db_url = db_url.split("?")[0]
+
 aiven_host = "pg-1bd8e7df-uniminuto-4de2.k.aivencloud.com"
 aiven_ip = "146.190.131.22"
 
@@ -32,8 +35,6 @@ is_render = os.getenv("RENDER") == "true"
 
 if not is_render and aiven_host in db_url:
     db_url = db_url.replace(aiven_host, aiven_ip)
-    if "?" in db_url:
-        db_url = db_url.split("?")[0]
     
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
