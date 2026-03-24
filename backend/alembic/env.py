@@ -26,20 +26,25 @@ if "postgres://" in db_url:
 
 aiven_host = "pg-1bd8e7df-uniminuto-4de2.k.aivencloud.com"
 aiven_ip = "146.190.131.22"
-if aiven_host in db_url:
-    db_url = db_url.replace(aiven_host, aiven_ip)
-if "?" in db_url:
-    db_url = db_url.split("?")[0]
 
-async def run_async_migrations() -> None:
+connect_args = {}
+is_render = os.getenv("RENDER") == "true"
+
+if not is_render and aiven_host in db_url:
+    db_url = db_url.replace(aiven_host, aiven_ip)
+    if "?" in db_url:
+        db_url = db_url.split("?")[0]
+    
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
-    
-    connectable = create_async_engine(db_url, poolclass=pool.NullPool, connect_args={
-        "ssl": ctx,
-        "server_hostname": aiven_host
-    })
+    connect_args["ssl"] = ctx
+    connect_args["server_hostname"] = aiven_host
+else:
+    connect_args["ssl"] = True
+
+async def run_async_migrations() -> None:
+    connectable = create_async_engine(db_url, poolclass=pool.NullPool, connect_args=connect_args)
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
