@@ -17,21 +17,18 @@ if "?" in DATABASE_URL:
 aiven_host = "pg-1bd8e7df-uniminuto-4de2.k.aivencloud.com"
 aiven_ip = "146.190.131.22"
 
-connect_args = {}
+# Global SSL Context (Disabling verification for Aiven compatibility)
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+
+connect_args = {"ssl": ctx}
 is_render = os.getenv("RENDER") == "true"
 
 if not is_render and aiven_host in DATABASE_URL:
-    # Local Windows often fails to resolve Aiven hostname, so we use IP + SNI
+    # Use IP bypass for local machine
     DATABASE_URL = DATABASE_URL.replace(aiven_host, aiven_ip)
-    
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    connect_args["ssl"] = ctx
     connect_args["server_hostname"] = aiven_host
-else:
-    # Standard SSL for Render/Cloud (Aiven requires SSL)
-    connect_args["ssl"] = True
 
 engine = create_async_engine(DATABASE_URL, connect_args=connect_args)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
